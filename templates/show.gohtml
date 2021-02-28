@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee</title>
+    <style>
+        html, body, p {
+            padding: 0;
+            border: 0;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-flow: column nowrap;
+            justify-content: center;
+            align-items: left;
+            height: 100vh;
+        }
+        p {
+            margin-left: 4rem;
+            font-size: 2rem;
+            color: black;
+        }
+        .link {
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<h2> ID: {{.EmpID}}  -  Name: {{.Firstname}} {{.Lastname}}  - Position: {{.Position}} - Salary: {{.Salary}}</h2>
+<br><br>
+<h1> Bonus: {{.Bonus}}</h1>
+<br>
+<h1> Total: {{.Total}}</h1>
+<p class="link"><a href="/emps">All Employees</a></p>
+
+</body>
+</html>
