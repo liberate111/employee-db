@@ -28,11 +28,11 @@
 
 <h1>Update a employee</h1>
 <form method="post" action="/emps/update/process">
-    <input type="text" name="empid" placeholder="empid" required autofocus value="{{.EmpID}}">
+    <input type="text" name="empid" placeholder="empid" readonly autofocus value="{{.EmpID}}">
     <input type="text" name="firstname" placeholder="firstname" required value="{{.Firstname}}">
     <input type="text" name="lastname" placeholder="lastname" required value="{{.Lastname}}">
     <input type="text" name="position" placeholder="position" required value="{{.Position}}">
-    <input type="text" name="salary" placeholder="salary" required value="{{.Salary}}">
+    <input type="number" name="salary" placeholder="salary" max="999999" min="1" required value="{{.Salary}}">
     <input type="submit">
 </form>
 

@@ -1,102 +1,83 @@
 package employees
 
 import (
-	"emp/config"
-	"fmt"
-	"net/http"
+	"github.com/gofiber/fiber/v2"
 )
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func Index(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
 
 	emps, err := AllEmps()
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
-		return
+		return c.Status(500).SendString("StatusInternalServerError")
 	}
-
-	config.TPL.ExecuteTemplate(w, "employees.gohtml", emps)
+	return c.Render("employees", emps)
 }
 
-func Show(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func Show(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
-
-	emp, err := OneEmp(r)
+	emp, err := OneEmp(c)
 	if err != nil {
-		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
-		return
+		return c.Status(500).SendString("StatusInternalServerError")
 	}
-
-	config.TPL.ExecuteTemplate(w, "show.gohtml", emp)
+	return c.Render("show", emp)
 }
 
-func Create(w http.ResponseWriter, r *http.Request) {
-	config.TPL.ExecuteTemplate(w, "create.gohtml", nil)
+func Create(c *fiber.Ctx) error {
+	return c.Render("create", nil)
 }
 
-func CreateProcess(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func CreateProcess(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodPost {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
 
-	emp, err := PutEmp(r)
+	emp, err := PutEmp(c)
 	if err != nil {
-		http.Error(w, http.StatusText(406), http.StatusNotAcceptable)
-		return
+		return c.Status(500).SendString("StatusInternalServerError")
 	}
 
-	config.TPL.ExecuteTemplate(w, "created.gohtml", emp)
+	return c.Render("created", emp)
 }
 
-func Update(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func Update(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
 
-	emp, err := OneEmp(r)
+	emp, err := OneEmp(c)
 	if err != nil {
-		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
-		return
+		return c.Status(500).SendString("StatusInternalServerError")
 	}
 
-	config.TPL.ExecuteTemplate(w, "update.gohtml", emp)
+	return c.Render("update", emp)
 }
 
-func UpdateProcess(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func UpdateProcess(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodPost {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
 
-	emp, err := UpdateEmp(r)
+	emp, err := UpdateEmp(c)
 	if err != nil {
-		http.Error(w, http.StatusText(406), http.StatusBadRequest)
-		return
+		return c.Status(500).SendString("StatusInternalServerError")
 	}
 
-	config.TPL.ExecuteTemplate(w, "updated.gohtml", emp)
+	return c.Render("updated", emp)
 }
 
-func DeleteProcess(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
-		return
+func DeleteProcess(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.Status(405).SendString("StatusMethodNotAllowed")
 	}
 
-	err := DeleteEmp(r)
+	err := DeleteEmp(c)
 	if err != nil {
-		http.Error(w, http.StatusText(400), http.StatusBadRequest)
-		return
+		return c.Status(400).SendString("StatusBadRequest")
 	}
-
-	http.Redirect(w, r, "/employees", http.StatusSeeOther)
+	return c.Redirect("/emps")
 }

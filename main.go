@@ -2,22 +2,42 @@ package main
 
 import (
 	"emp/employees"
-	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/template/html"
 )
 
 func main() {
-	http.HandleFunc("/", index)
-	http.HandleFunc("/emps", employees.Index)
-	http.Handle("/favicon.ico", http.NotFoundHandler())
-	http.HandleFunc("/emps/show", employees.Show)
-	http.HandleFunc("/emps/create", employees.Create)
-	http.HandleFunc("/emps/create/process", employees.CreateProcess)
-	http.HandleFunc("/emps/update", employees.Update)
-	http.HandleFunc("/emps/update/process", employees.UpdateProcess)
-	http.HandleFunc("/emps/delete/process", employees.DeleteProcess)
-	http.ListenAndServe(":8080", nil)
+	engine := html.New("./templates", ".gohtml")
+	app := fiber.New(fiber.Config{
+		Views: engine,
+	})
+	app.Use(logger.New())
+	app.Use(favicon.New())
+
+	setupRoute(app)
+
+	err := app.Listen(":3000")
+	if err != nil {
+		panic(err)
+	}
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/emps", http.StatusSeeOther)
+func setupRoute(app *fiber.App) {
+	app.Get("/", index)
+
+	emp := app.Group("/emps")
+	emp.Get("/", employees.Index)
+	emp.Get("/show", employees.Show)
+	emp.Get("/create", employees.Create)
+	emp.Post("/create/process", employees.CreateProcess)
+	emp.Get("/update", employees.Update)
+	emp.Post("/update/process", employees.UpdateProcess)
+	emp.Get("/delete/process", employees.DeleteProcess)
+}
+
+func index(c *fiber.Ctx) error {
+	return c.Redirect("/emps")
 }

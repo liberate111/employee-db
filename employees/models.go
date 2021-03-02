@@ -5,28 +5,29 @@ import (
 	"emp/config"
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Employee struct {
-	// ID     bson.ObjectId // `bson:"_id"`
+	// ID        bson.ObjectId `bson:"_id"`
 	EmpID     string  `bson:"empId"`
 	Firstname string  `bson:"firstname"`
 	Lastname  string  `bson:"lastname"`
 	Position  string  `bson:"position"`
-	Salary    float32 `bson:"salary"`
-	Bonus     float32 `bson:"bonus,omitempty"`
-	Total     float32 `bson:"total,omitempty"`
+	Salary    float64 `bson:"salary"`
+	Bonus     float64 `bson:"bonus,omitempty"`
+	Total     float64 `bson:"total,omitempty"`
+	// SalaryStr string  `bson:"SalaryStr,omitempty"`
 }
 
 func AllEmps() ([]Employee, error) {
 	emps := []Employee{}
 	filter := bson.D{}
-	opts := options.Find().SetSort(bson.D{{"empId", 1}})
+	opts := options.Find().SetSort(bson.D{{Key: "empId", Value: 1}})
 	cursor, err := config.Coll.Find(context.TODO(), filter, opts)
 	if err != nil {
 		return nil, err
@@ -37,14 +38,14 @@ func AllEmps() ([]Employee, error) {
 	}
 	return emps, nil
 }
-func OneEmp(r *http.Request) (Employee, error) {
+func OneEmp(c *fiber.Ctx) (Employee, error) {
 	emp := Employee{}
-	empId := r.FormValue("empid")
+	empId := c.FormValue("empid")
 	if empId == "" {
-		return emp, errors.New("400. Bad Request.")
+		return emp, errors.New("400. Bad Request")
 	}
 	// Find one
-	filter := bson.D{{"empId", empId}}
+	filter := bson.D{{Key: "empId", Value: empId}}
 	err := config.Coll.FindOne(context.TODO(), filter).Decode(&emp)
 	if err != nil {
 		return emp, err
@@ -62,32 +63,32 @@ func OneEmp(r *http.Request) (Employee, error) {
 		emp.Bonus = 0.5 * emp.Salary
 		emp.Total = emp.Salary + emp.Bonus
 	default:
-		fmt.Println("No Bonus & total")
+		fmt.Println("default case")
 	}
 
 	return emp, nil
 }
 
-func PutEmp(r *http.Request) (Employee, error) {
+func PutEmp(c *fiber.Ctx) (Employee, error) {
 	// get form values
 	emp := Employee{}
-	emp.EmpID = r.FormValue("empid")
-	emp.Firstname = r.FormValue("firstname")
-	emp.Lastname = r.FormValue("lastname")
-	emp.Position = r.FormValue("position")
-	s := r.FormValue("salary")
+	emp.EmpID = c.FormValue("empid")
+	emp.Firstname = c.FormValue("firstname")
+	emp.Lastname = c.FormValue("lastname")
+	emp.Position = c.FormValue("position")
+	s := c.FormValue("salary")
 
 	// validate form values
 	if emp.EmpID == "" || emp.Firstname == "" || emp.Lastname == "" || emp.Position == "" || s == "" {
-		return emp, errors.New("400. Bad request. All fields must be complete.")
+		return emp, errors.New("400. Bad request. All fields must be complete")
 	}
 
 	// convert form values
-	f64, err := strconv.ParseFloat(s, 32)
+	f64, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return emp, errors.New("406. Not Acceptable. Price must be a number.")
+		return emp, errors.New("406. Not Acceptable. Salary must be a number")
 	}
-	emp.Salary = float32(f64)
+	emp.Salary = f64
 
 	// insert the document
 	res, err := config.Coll.InsertOne(context.TODO(), emp)
@@ -98,36 +99,36 @@ func PutEmp(r *http.Request) (Employee, error) {
 	return emp, nil
 }
 
-func UpdateEmp(r *http.Request) (Employee, error) {
+func UpdateEmp(c *fiber.Ctx) (Employee, error) {
 	// get form values
 	emp := Employee{}
-	emp.EmpID = r.FormValue("empid")
-	emp.Firstname = r.FormValue("firstname")
-	emp.Lastname = r.FormValue("lastname")
-	emp.Position = r.FormValue("position")
-	s := r.FormValue("salary")
+	emp.EmpID = c.FormValue("empid")
+	emp.Firstname = c.FormValue("firstname")
+	emp.Lastname = c.FormValue("lastname")
+	emp.Position = c.FormValue("position")
+	s := c.FormValue("salary")
 
 	// validate form values
 	if emp.EmpID == "" || emp.Firstname == "" || emp.Lastname == "" || emp.Position == "" || s == "" {
-		return emp, errors.New("400. Bad request. All fields must be complete.")
+		return emp, errors.New("400. Bad request. All fields must be complete")
 	}
 
 	// convert form values
-	f64, err := strconv.ParseFloat(s, 32)
+	f64, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return emp, errors.New("406. Not Acceptable. Price must be a number.")
+		return emp, errors.New("406. Not Acceptable. Salary must be a number")
 	}
-	emp.Salary = float32(f64)
+	emp.Salary = f64
 
 	// Update one
-	filter := bson.D{{"empId", emp.EmpID}}
-	update := bson.D{{"$set",
-		bson.D{
-			{"empId", emp.EmpID},
-			{"firstname", emp.Firstname},
-			{"lastname", emp.Lastname},
-			{"position", emp.Position},
-			{"salary", emp.Salary},
+	filter := bson.D{{Key: "empId", Value: emp.EmpID}}
+	update := bson.D{{Key: "$set",
+		Value: bson.D{
+			{Key: "empId", Value: emp.EmpID},
+			{Key: "firstname", Value: emp.Firstname},
+			{Key: "lastname", Value: emp.Lastname},
+			{Key: "position", Value: emp.Position},
+			{Key: "salary", Value: emp.Salary},
 		}}}
 	res, err := config.Coll.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
@@ -139,15 +140,19 @@ func UpdateEmp(r *http.Request) (Employee, error) {
 	return emp, nil
 }
 
-func DeleteEmp(r *http.Request) error {
-	empId := r.FormValue("empid")
+func DeleteEmp(c *fiber.Ctx) error {
+	empId := c.FormValue("empid")
 	if empId == "" {
-		return errors.New("400. Bad Request.")
+		return errors.New("400. Bad Request")
 	}
 	// Delete one
-	res, err := config.Coll.DeleteOne(context.TODO(), bson.D{{"empId", empId}})
+	res, err := config.Coll.DeleteOne(context.TODO(), bson.D{{Key: "empId", Value: empId}})
 	if err != nil {
 		return errors.New("500. Internal Server Error")
+	}
+	// the employee might not exist
+	if res.DeletedCount < 1 {
+		return c.SendStatus(404)
 	}
 	fmt.Printf("deleted %v documents\n", res.DeletedCount)
 	return nil
